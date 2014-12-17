@@ -14,7 +14,7 @@ tabTweak.prototype = {
   observe: function(aSubject, aTopic, aData) {
     switch (aTopic) {
       case 'profile-after-change': {
-        this.init();
+        Services.ww.registerNotification(this);
         break;
       }
       case 'domwindowopened': {
@@ -35,7 +35,7 @@ tabTweak.prototype = {
           // Hack whereToOpenLink for bookmark, history and searchbox (on button clicked).
           let whereToOpenLink = aSubject.whereToOpenLink;
           aSubject.whereToOpenLink = function() {
-            switch(Components.stack.caller.name) {
+            switch (Components.stack.caller.name) {
               case 'PUIU_openNodeWithEvent':
               case 'PUIU__openTabset':
               case 'handleSearchCommand': {
@@ -48,16 +48,6 @@ tabTweak.prototype = {
         break;
       }
     }
-  },
-
-  init: function() {
-    Services.ww.registerNotification(this);
-
-    let defPrefs = Services.prefs.getDefaultBranch('');
-    // Handle searchbox (on Enter pressed).
-    defPrefs.setBoolPref('browser.search.openintab', true);
-    // Don't close window with last tab.
-    defPrefs.setBoolPref('browser.tabs.closeWindowWithLastTab', false);
   }
 }
 
