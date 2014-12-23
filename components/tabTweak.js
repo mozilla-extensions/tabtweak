@@ -12,42 +12,96 @@ tabTweak.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
 
   observe: function(aSubject, aTopic, aData) {
+    let self = this;
+
     switch (aTopic) {
-      case 'profile-after-change': {
+      case 'profile-after-change':
         Services.ww.registerNotification(this);
         break;
-      }
-      case 'domwindowopened': {
-        // Before loaded aSubject.whereToOpenLink is undefined.
-        aSubject.addEventListener('DOMContentLoaded', function() {
-          let windowtype = aSubject.document.documentElement.getAttribute('windowtype');
-          // Ignore console window.
-          if (windowtype != 'navigator:browser') return;
+      case 'domwindowopened':
+        aSubject.addEventListener('DOMContentLoaded', function(aEvt) {
+          let win = aEvt.target.defaultView;
+          if (!(win instanceof aSubject.ChromeWindow)) {
+            return;
+          }
 
-          // Close tab on double click.
-          aSubject.gBrowser.tabContainer.addEventListener('dblclick', function(aEvent) {
-            if (aEvent.button != 0 ||  aEvent.target.localName == 'tabs' ) return;
+          if (win.gBrowser) {
+            win.gBrowser.tabContainer.addEventListener('dblclick', function(aEvt) {
+              if (aEvt.button != 0 || aEvt.target.localName !== 'tab') {
+                return;
+              }
 
-            let tab = aEvent.target;
-            if (tab) aSubject.gBrowser.removeTab(tab);
-          }, false);
+              let tab = aEvt.target;
+              if (tab) {
+                tab.ownerGlobal.gBrowser.removeTab(tab);
+              }
+            }, false);
 
-          // Hack whereToOpenLink for bookmark, history and searchbox (on button clicked).
-          let whereToOpenLink = aSubject.whereToOpenLink;
-          aSubject.whereToOpenLink = function() {
-            switch (Components.stack.caller.name) {
-              case 'PUIU_openNodeWithEvent':
-              case 'PUIU__openTabset':
-              case 'handleSearchCommand': {
+            let addTab = win.gBrowser.addTab;
+            win.gBrowser.addTab = function() {
+              let args = [].slice.call(arguments);
+              if (args.length == 2 && typeof args[1] == "object" &&
+                  !(args[1] instanceof Ci.nsIURI) &&
+                  self._matchStack('addTab', Components.stack)) {
+                args[1].relatedToCurrent = true;
+              }
+              return addTab.apply(win.gBrowser, args);
+            }
+          };
+
+          if (win.whereToOpenLink) {
+            let whereToOpenLink = win.whereToOpenLink;
+            win.whereToOpenLink = function() {
+              if (self._matchStack('whereToOpenLink', Components.stack)) {
                 return 'tab';
               }
+              return whereToOpenLink.apply(win, arguments);
             }
-            return whereToOpenLink.apply(aSubject, arguments);
-          }
-        });
+          };
+        }, false);
         break;
-      }
     }
+  },
+
+  _expectedStacks: {
+    'addTab': [
+      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'BEH_onCommand'],
+      //['loadTabs', 'PUIU__openTabset', 'PUIU_openContainerInTabs', 'PC_openLinksInTabs'],
+      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'openUILink', 'HM__onCommand'],
+      //['loadTabs', 'PUIU__openTabset', 'PUIU_openContainerInTabs', 'SU_handleTreeClick'],
+      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'SU_handleTreeClick'],
+      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'SU_handleTreeKeyPress'],
+      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'doSearch', 'handleSearchCommand'],
+      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'openUILink', 'CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit']
+    ],
+    'whereToOpenLink': [
+      ['PUIU_openNodeWithEvent', 'BEH_onCommand'],
+      //['PUIU__openTabset', 'PUIU_openContainerInTabs', 'PC_openLinksInTabs'],
+      ['openUILink', 'HM__onCommand'],
+      //['PUIU__openTabset', 'PUIU_openContainerInTabs', 'SU_handleTreeClick'],
+      ['PUIU_openNodeWithEvent', 'SU_handleTreeClick'],
+      ['PUIU_openNodeWithEvent', 'SU_handleTreeKeyPress'],
+      ['handleSearchCommand'],
+      ['openUILink', 'CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit']
+    ]
+  },
+  _matchStack: function(aType, aStack) {
+    return this._expectedStacks[aType].some(function(aExpected) {
+      let expected = aExpected.slice();
+      let caller = aStack.caller;
+
+      while (expected.length) {
+        let last = expected.shift();
+        if (last !== caller.name) {
+          return false;
+        }
+
+        caller = caller.caller;
+      }
+
+      Services.console.logStringMessage("*** TabTweak ***: Match for " + aType);
+      return true;
+    });
   }
 }
 
