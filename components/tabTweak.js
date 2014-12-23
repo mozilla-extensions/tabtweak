@@ -99,7 +99,6 @@ tabTweak.prototype = {
         caller = caller.caller;
       }
 
-      Services.console.logStringMessage("*** TabTweak ***: Match for " + aType);
       return true;
     });
   }
