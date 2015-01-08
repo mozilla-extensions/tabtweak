@@ -1,6 +1,8 @@
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+XPCOMUtils.defineLazyModuleGetter(this, 'AddonManager',
+  'resource://gre/modules/AddonManager.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Services',
   'resource://gre/modules/Services.jsm');
 
@@ -17,6 +19,23 @@ tabTweak.prototype = {
     switch (aTopic) {
       case 'profile-after-change':
         Services.ww.registerNotification(this);
+
+        let tilID = 'tabimprovelite@mozillaonline.com';
+        let ttkID = 'tabtweak@mozillaonline.com';
+        AddonManager.getAddonByID(tilID, function(aTIL) {
+          if (aTIL) {
+            if (aTIL.isActive) {
+              AddonManager.getAddonByID(ttkID, function(aTTK) {
+                aTTK.uninstall();
+              })
+            } else {
+              aTIL.uninstall();
+              self._init();
+            }
+          } else {
+            self._init();
+          }
+        });
         break;
       case 'domwindowopened':
         aSubject.addEventListener('DOMContentLoaded', function(aEvt) {
@@ -25,42 +44,60 @@ tabTweak.prototype = {
             return;
           }
 
-          if (win.gBrowser) {
-            win.gBrowser.tabContainer.addEventListener('dblclick', function(aEvt) {
-              if (aEvt.button != 0 || aEvt.target.localName !== 'tab') {
-                return;
-              }
-
-              let tab = aEvt.target;
-              if (tab) {
-                tab.ownerGlobal.gBrowser.removeTab(tab);
-              }
-            }, false);
-
-            let addTab = win.gBrowser.addTab;
-            win.gBrowser.addTab = function() {
-              let args = [].slice.call(arguments);
-              if (args.length == 2 && typeof args[1] == "object" &&
-                  !(args[1] instanceof Ci.nsIURI) &&
-                  self._matchStack('addTab', Components.stack)) {
-                args[1].relatedToCurrent = true;
-              }
-              return addTab.apply(win.gBrowser, args);
-            }
-          };
-
-          if (win.whereToOpenLink) {
-            let whereToOpenLink = win.whereToOpenLink;
-            win.whereToOpenLink = function() {
-              if (self._matchStack('whereToOpenLink', Components.stack)) {
-                return 'tab';
-              }
-              return whereToOpenLink.apply(win, arguments);
-            }
-          };
+          if (self._inited) {
+            self._patchWindow(win);
+          } else {
+            self._cachedWindows.push(win);
+          }
         }, false);
         break;
     }
+  },
+
+  _cachedWindows: [],
+  _inited: false,
+  _init: function() {
+    this._inited = true;
+    while (this._cachedWindows.length) {
+      this._patchWindow(this._cachedWindows.shift());
+    };
+  },
+  _patchWindow: function(aWin) {
+    let self = this;
+
+    if (aWin.gBrowser) {
+      aWin.gBrowser.tabContainer.addEventListener('dblclick', function(aEvt) {
+        if (aEvt.button != 0 || aEvt.target.localName !== 'tab') {
+          return;
+        }
+
+        let tab = aEvt.target;
+        if (tab) {
+          tab.ownerGlobal.gBrowser.removeTab(tab);
+        }
+      }, false);
+
+      let addTab = aWin.gBrowser.addTab;
+      aWin.gBrowser.addTab = function() {
+        let args = [].slice.call(arguments);
+        if (args.length == 2 && typeof args[1] == "object" &&
+            !(args[1] instanceof Ci.nsIURI) &&
+            self._matchStack('addTab', Components.stack)) {
+          args[1].relatedToCurrent = true;
+        }
+        return addTab.apply(aWin.gBrowser, args);
+      }
+    };
+
+    if (aWin.whereToOpenLink) {
+      let whereToOpenLink = aWin.whereToOpenLink;
+      aWin.whereToOpenLink = function() {
+        if (self._matchStack('whereToOpenLink', Components.stack)) {
+          return 'tab';
+        }
+        return whereToOpenLink.apply(aWin, arguments);
+      }
+    };
   },
 
   _expectedStacks: {
