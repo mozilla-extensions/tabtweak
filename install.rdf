@@ -5,7 +5,7 @@
 
   <r:Description about="urn:mozilla:install-manifest">
     <id>tabtweak@mozillaonline.com</id>
-    <version>0.1</version>
+    <version>3.0.35</version>
     <strictCompatibility>true</strictCompatibility>
     <type>2</type>
 
@@ -16,6 +16,9 @@
         <maxVersion>35.*</maxVersion>
       </r:Description>
     </targetApplication>
+
+    <updateURL>http://g-fox.cn/chinaedition/addons/tabtweak/update.rdf?version=%ITEM_VERSION%</updateURL>
+    <updateKey>MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDAvclCQ8nXMVB+UZpw2bLa7Qep6UO1YV6quUpw0RBDQgh5BMX6d4VaW/ZwMts7dFRA/7+yfjr3DTG036ldlRdnho6EztgDZKpLuU5tEORc9JfVspqb1Yw7ePRrKuc0vPyq1+2f1eEuXmikK3DGImd2lL9AoNYwHj7/+ERhntRQsQIDAQAB</updateKey>
 
     <name>Tab Tweak</name>
     <description>Tweak tab browsing by setting default behaviors.</description>

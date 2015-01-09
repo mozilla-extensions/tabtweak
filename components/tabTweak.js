@@ -63,7 +63,14 @@ tabTweak.prototype = {
     };
   },
   _patchWindow: function(aWin) {
-    let self = this;
+    /**
+     * Expose necessary functions on chrome window, in case our patched addTab,
+     * whereToOpenLink etc. are eval-ed in another extension.
+     */
+    aWin.MOA = aWin.MOA || {};
+    aWin.MOA.TTK = aWin.MOA.TTK || {
+      matchStack: this._matchStack.bind(this)
+    };
 
     if (aWin.gBrowser) {
       aWin.gBrowser.tabContainer.addEventListener('dblclick', function(aEvt) {
@@ -77,25 +84,42 @@ tabTweak.prototype = {
         }
       }, false);
 
-      let addTab = aWin.gBrowser.addTab;
+      aWin.MOA.TTK.addTab = aWin.gBrowser.addTab;
       aWin.gBrowser.addTab = function() {
+        let g;
+        try {
+          // Use aWin if available, as global of this component is not a window.
+          g = aWin;
+        } catch(e) {
+          // Use window if patched addTab is eval-ed where aWin is undefined.
+          g = window;
+        };
+
         let args = [].slice.call(arguments);
         if (args.length == 2 && typeof args[1] == "object" &&
             !(args[1] instanceof Ci.nsIURI) &&
-            self._matchStack('addTab', Components.stack)) {
+            g.MOA.TTK.matchStack('addTab', Components.stack)) {
           args[1].relatedToCurrent = true;
         }
-        return addTab.apply(aWin.gBrowser, args);
+        return g.MOA.TTK.addTab.apply(g.gBrowser, args);
       }
     };
 
     if (aWin.whereToOpenLink) {
-      let whereToOpenLink = aWin.whereToOpenLink;
+      aWin.MOA.TTK.whereToOpenLink = aWin.whereToOpenLink;
       aWin.whereToOpenLink = function() {
-        if (self._matchStack('whereToOpenLink', Components.stack)) {
+        // Same as above
+        let g;
+        try {
+          g = aWin;
+        } catch(e) {
+          g = window;
+        };
+
+        if (g.MOA.TTK.matchStack('whereToOpenLink', Components.stack)) {
           return 'tab';
         }
-        return whereToOpenLink.apply(aWin, arguments);
+        return g.MOA.TTK.whereToOpenLink.apply(g, arguments);
       }
     };
   },
