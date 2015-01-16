@@ -64,15 +64,15 @@ tabTweak.prototype = {
   },
   _patchWindow: function(aWin) {
     /**
-     * Expose necessary functions on chrome window, in case our patched addTab,
-     * whereToOpenLink etc. are eval-ed in another extension.
+     * Expose necessary functions on chrome window, in case our patched
+     * openLinkIn etc. are eval-ed in another extension.
      */
     aWin.MOA = aWin.MOA || {};
     aWin.MOA.TTK = aWin.MOA.TTK || {
       matchStack: this._matchStack.bind(this)
     };
 
-    if (aWin.gBrowser) {
+    if (aWin.gBrowser && aWin.gBrowser.tabContainer) {
       aWin.gBrowser.tabContainer.addEventListener('dblclick', function(aEvt) {
         if (aEvt.button != 0 || aEvt.target.localName !== 'tab') {
           return;
@@ -83,31 +83,11 @@ tabTweak.prototype = {
           tab.ownerGlobal.gBrowser.removeTab(tab);
         }
       }, false);
-
-      aWin.MOA.TTK.addTab = aWin.gBrowser.addTab;
-      aWin.gBrowser.addTab = function() {
-        let g;
-        try {
-          // Use aWin if available, as global of this component is not a window.
-          g = aWin;
-        } catch(e) {
-          // Use window if patched addTab is eval-ed where aWin is undefined.
-          g = window;
-        };
-
-        let args = [].slice.call(arguments);
-        if (args.length == 2 && typeof args[1] == "object" &&
-            !(args[1] instanceof Ci.nsIURI) &&
-            g.MOA.TTK.matchStack('addTab', Components.stack)) {
-          args[1].relatedToCurrent = true;
-        }
-        return g.MOA.TTK.addTab.apply(g.gBrowser, args);
-      }
     };
 
-    if (aWin.whereToOpenLink) {
-      aWin.MOA.TTK.whereToOpenLink = aWin.whereToOpenLink;
-      aWin.whereToOpenLink = function() {
+    if (aWin.openLinkIn) {
+      aWin.MOA.TTK.openLinkIn = aWin.openLinkIn;
+      aWin.openLinkIn = function() {
         // Same as above
         let g;
         try {
@@ -116,34 +96,31 @@ tabTweak.prototype = {
           g = window;
         };
 
-        if (g.MOA.TTK.matchStack('whereToOpenLink', Components.stack)) {
-          return 'tab';
+        let args = [].slice.call(arguments);
+        if (g.MOA.TTK.matchStack('openLinkIn', Components.stack)) {
+          try {
+            let uri = Services.io.newURI(args[0], null, null);
+            args[1] = uri.schemeIs('javascript') ? 'current' : 'tab';
+            if (typeof args[2] === 'object') {
+              args[2].relatedToCurrent = true;
+            } else {
+              Services.console.logStringMessage('MOA.TTK: Invalid params?');
+            }
+          } catch(e) {};
         }
-        return g.MOA.TTK.whereToOpenLink.apply(g, arguments);
+        return g.MOA.TTK.openLinkIn.apply(g, args);
       }
     };
   },
 
   _expectedStacks: {
-    'addTab': [
-      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'BEH_onCommand'],
-      //['loadTabs', 'PUIU__openTabset', 'PUIU_openContainerInTabs', 'PC_openLinksInTabs'],
-      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'openUILink', 'HM__onCommand'],
-      //['loadTabs', 'PUIU__openTabset', 'PUIU_openContainerInTabs', 'SU_handleTreeClick'],
-      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'SU_handleTreeClick'],
-      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'SU_handleTreeKeyPress'],
-      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'doSearch', 'handleSearchCommand'],
-      ['loadOneTab', 'openLinkIn', 'openUILinkIn', 'openUILink', 'CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit']
-    ],
-    'whereToOpenLink': [
-      ['PUIU_openNodeWithEvent', 'BEH_onCommand'],
-      //['PUIU__openTabset', 'PUIU_openContainerInTabs', 'PC_openLinksInTabs'],
-      ['openUILink', 'HM__onCommand'],
-      //['PUIU__openTabset', 'PUIU_openContainerInTabs', 'SU_handleTreeClick'],
-      ['PUIU_openNodeWithEvent', 'SU_handleTreeClick'],
-      ['PUIU_openNodeWithEvent', 'SU_handleTreeKeyPress'],
-      ['handleSearchCommand'],
-      ['openUILink', 'CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit']
+    'openLinkIn': [
+      ['openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'BEH_onCommand'],
+      ['openUILinkIn', 'openUILink', 'HM__onCommand'],
+      ['openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'SU_handleTreeClick'],
+      ['openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'SU_handleTreeKeyPress'],
+      ['openUILinkIn', 'doSearch', 'handleSearchCommand'],
+      ['openUILinkIn', 'openUILink', 'CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit']
     ]
   },
   _matchStack: function(aType, aStack) {
