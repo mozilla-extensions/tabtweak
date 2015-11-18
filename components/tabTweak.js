@@ -3,6 +3,8 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'AddonManager',
   'resource://gre/modules/AddonManager.jsm');
+XPCOMUtils.defineLazyModuleGetter(this, 'Preferences',
+  'resource://gre/modules/Preferences.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Services',
   'resource://gre/modules/Services.jsm');
 
@@ -14,50 +16,71 @@ tabTweak.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
 
   observe: function(aSubject, aTopic, aData) {
-    let self = this;
-
     switch (aTopic) {
       case 'profile-after-change':
         Services.ww.registerNotification(this);
 
         let tilID = 'tabimprovelite@mozillaonline.com';
         let ttkID = 'tabtweak@mozillaonline.com';
-        AddonManager.getAddonByID(tilID, function(aTIL) {
+        AddonManager.getAddonByID(tilID, (aTIL) => {
           if (aTIL) {
             if (aTIL.isActive) {
-              AddonManager.getAddonByID(ttkID, function(aTTK) {
+              AddonManager.getAddonByID(ttkID, (aTTK) => {
                 aTTK.uninstall();
               })
             } else {
               aTIL.uninstall();
-              self._init();
+              this._init();
             }
           } else {
-            self._init();
+            this._init();
           }
         });
         break;
       case 'domwindowopened':
-        aSubject.addEventListener('DOMContentLoaded', function(aEvt) {
+        aSubject.addEventListener('DOMContentLoaded', (aEvt) => {
           let win = aEvt.target.defaultView;
           if (!(win instanceof aSubject.ChromeWindow)) {
             return;
           }
 
-          if (self._inited) {
-            self._patchWindow(win);
+          if (this._inited) {
+            this._patchWindow(win);
           } else {
-            self._cachedWindows.push(win);
+            this._cachedWindows.push(win);
           }
         }, false);
+        break;
+      case 'nsPref:changed':
+        if (!aData.startsWith(this.prefs._branchStr)) {
+          return;
+        }
+
+        let prefKey = aData.slice(this.prefs._branchStr.length);
+        if (this._cachedPrefs[prefKey] === undefined) {
+          return;
+        }
+        this._cachedPrefs[prefKey] = this.prefs.get(prefKey, false);
         break;
     }
   },
 
+  get prefs() {
+    delete this.prefs;
+    return this.prefs = new Preferences("extensions.tabtweak.");
+  },
+  _cachedPrefs: {
+    'newtabNextToCurrent': false
+  },
   _cachedWindows: [],
   _inited: false,
   _init: function() {
     this._inited = true;
+    for (let prefKey in this._cachedPrefs) {
+      this._cachedPrefs[prefKey] = this.prefs.get(prefKey, false);
+    }
+    this.prefs.observe(undefined, this);
+
     while (this._cachedWindows.length) {
       this._patchWindow(this._cachedWindows.shift());
     };
@@ -73,7 +96,7 @@ tabTweak.prototype = {
     };
 
     if (aWin.gBrowser && aWin.gBrowser.tabContainer) {
-      aWin.gBrowser.tabContainer.addEventListener('dblclick', function(aEvt) {
+      aWin.gBrowser.tabContainer.addEventListener('dblclick', (aEvt) => {
         if (aEvt.button != 0 || aEvt.target.localName !== 'tab') {
           return;
         }
@@ -87,7 +110,7 @@ tabTweak.prototype = {
 
     if (aWin.openLinkIn) {
       aWin.MOA.TTK.openLinkIn = aWin.openLinkIn;
-      aWin.openLinkIn = function() {
+      aWin.openLinkIn = (...args) => {
         // Same as above
         let g;
         try {
@@ -96,17 +119,25 @@ tabTweak.prototype = {
           g = window;
         };
 
-        let args = [].slice.call(arguments);
         if (g.MOA.TTK.matchStack('openLinkIn', Components.stack)) {
           try {
-            let uri = Services.io.newURI(args[0], null, null);
-            args[1] = uri.schemeIs('javascript') ? 'current' : 'tab';
+            let uriToLoad = Services.io.newURI(args[0], null, null);
+            if (uriToLoad.spec !== g.BROWSER_NEW_TAB_URL) {
+              let currentURI = g.gBrowser.selectedBrowser.currentURI;
+              let inCurrentTab = (g.isBlankPageURL &&
+                                  g.isBlankPageURL(currentURI.spec)) ||
+                                 uriToLoad.schemeIs('javascript') ||
+                                 uriToLoad.equals(currentURI);
+              args[1] = inCurrentTab ? 'current' : 'tab';
+            }
             if (typeof args[2] === 'object') {
               args[2].relatedToCurrent = true;
             } else {
               Services.console.logStringMessage('MOA.TTK: Invalid params?');
             }
-          } catch(e) {};
+          } catch(e) {
+            Cu.reportError(e);
+          };
         }
         return g.MOA.TTK.openLinkIn.apply(g, args);
       }
@@ -115,22 +146,38 @@ tabTweak.prototype = {
 
   _expectedStacks: {
     'openLinkIn': [
-      ['openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'BEH_onCommand'],
-      ['openUILinkIn', 'openUILink', 'HM__onCommand'],
-      ['openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'SU_handleTreeClick'],
-      ['openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', 'SU_handleTreeKeyPress'],
-      ['openUILinkIn', 'doSearch', 'handleSearchCommand'],
-      ['openUILinkIn', 'openUILink', 'CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit']
+      [undefined,
+        'openUILinkIn', 'doSearch', 'handleSearchCommand'],
+      [undefined,
+        'openUILinkIn', 'openUILink', ['CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit',
+                                       'HM__onCommand']],
+      [undefined,
+        'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', ['BEH_onCommand',
+                                                                      'SU_handleTreeClick',
+                                                                      'SU_handleTreeKeyPress']],
+      ['newtabNextToCurrent',
+        'openUILinkIn', ['BrowserOpenTab','ns.browserOpenTab'], ['BrowserOpenNewTabOrWindow',
+                                                                 'HandleAppCommandEvent',
+                                                                 'nsBrowserAccess.prototype._openURIInNewTab']]
     ]
   },
   _matchStack: function(aType, aStack) {
-    return this._expectedStacks[aType].some(function(aExpected) {
+    return this._expectedStacks[aType].some((aExpected) => {
       let expected = aExpected.slice();
+      let prefKey = expected.shift();
+      if (prefKey && !this._cachedPrefs[prefKey]) {
+        return false;
+      }
+
       let caller = aStack.caller;
 
       while (expected.length) {
         let last = expected.shift();
-        if (last !== caller.name) {
+        if (Array.isArray(last)) {
+          if (last.indexOf(caller.name) < 0) {
+            return false;
+          }
+        } else if (last !== caller.name) {
           return false;
         }
 
