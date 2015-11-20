@@ -5,7 +5,7 @@
 
   <r:Description about="urn:mozilla:install-manifest">
     <id>tabtweak@mozillaonline.com</id>
-    <version>3.0.42</version>
+    <version>3.0.42.2</version>
     <strictCompatibility>true</strictCompatibility>
     <type>2</type>
 
