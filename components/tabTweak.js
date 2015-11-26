@@ -122,10 +122,13 @@ tabTweak.prototype = {
         if (g.MOA.TTK.matchStack('openLinkIn', Components.stack)) {
           try {
             let uriToLoad = Services.io.newURI(args[0], null, null);
-            if (uriToLoad.spec !== g.BROWSER_NEW_TAB_URL) {
-              let currentURI = g.gBrowser.selectedBrowser.currentURI;
-              let inCurrentTab = (g.isBlankPageURL &&
-                                  g.isBlankPageURL(currentURI.spec)) ||
+            let topWin = g.getTopWin && g.getTopWin();
+            if (topWin && topWin.gBrowser &&
+                topWin.BROWSER_NEW_TAB_URL &&
+                uriToLoad.spec !== topWin.BROWSER_NEW_TAB_URL) {
+              let currentURI = topWin.gBrowser.selectedBrowser.currentURI;
+              let inCurrentTab = (topWin.isBlankPageURL &&
+                                  topWin.isBlankPageURL(currentURI.spec)) ||
                                  uriToLoad.schemeIs('javascript') ||
                                  uriToLoad.equals(currentURI);
               args[1] = inCurrentTab ? 'current' : 'tab';
