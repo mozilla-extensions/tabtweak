@@ -8,6 +8,7 @@
     <version>3.0.48</version>
     <strictCompatibility>true</strictCompatibility>
     <type>2</type>
+    <multiprocessCompatible>true</multiprocessCompatible>
 
     <targetApplication>
       <r:Description>
