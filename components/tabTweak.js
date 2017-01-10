@@ -73,6 +73,7 @@ tabTweak.prototype = {
     'newtabNextToCurrent': false
   },
   _cachedWindows: [],
+  _debug: false,
   _inited: false,
   _init: function() {
     this._inited = true;
@@ -119,6 +120,9 @@ tabTweak.prototype = {
           g = window;
         };
 
+        if (this._debug) {
+          g.console.log(Components.stack);
+        }
         if (g.MOA.TTK.matchStack('openLinkIn', Components.stack)) {
           try {
             let uriToLoad = Services.io.newURI(args[0], null, null);
@@ -150,7 +154,8 @@ tabTweak.prototype = {
   _expectedStacks: {
     'openLinkIn': [
       [undefined,
-        'openUILinkIn', 'doSearch', 'handleSearchCommand'],
+        'openUILinkIn', 'doSearch', ['handleSearchCommandWhere',
+                                     'handleSearchCommand']],
       [undefined,
         'openUILinkIn', 'openUILink', ['CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit',
                                        'HM__onCommand']],
