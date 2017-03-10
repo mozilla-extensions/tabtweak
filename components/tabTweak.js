@@ -123,28 +123,30 @@ tabTweak.prototype = {
         if (this._debug) {
           g.console.log(Components.stack);
         }
-        if (g.MOA.TTK.matchStack('openLinkIn', Components.stack)) {
-          try {
-            let uriToLoad = Services.io.newURI(args[0], null, null);
-            let topWin = g.getTopWin && g.getTopWin();
-            if (topWin && topWin.gBrowser &&
-                topWin.BROWSER_NEW_TAB_URL &&
-                uriToLoad.spec !== topWin.BROWSER_NEW_TAB_URL) {
-              let currentURI = topWin.gBrowser.selectedBrowser.currentURI;
-              let inCurrentTab = (topWin.isBlankPageURL &&
-                                  topWin.isBlankPageURL(currentURI.spec)) ||
-                                 uriToLoad.schemeIs('javascript') ||
-                                 uriToLoad.equals(currentURI);
-              args[1] = inCurrentTab ? 'current' : 'tab';
-            }
-            if (typeof args[2] === 'object') {
-              args[2].relatedToCurrent = true;
-            } else {
-              Services.console.logStringMessage('MOA.TTK: Invalid params?');
-            }
-          } catch(e) {
-            Cu.reportError(e);
-          };
+        if (args[1] !== 'window') {
+          if (g.MOA.TTK.matchStack('openLinkIn', Components.stack)) {
+            try {
+              let uriToLoad = Services.io.newURI(args[0], null, null);
+              let topWin = g.getTopWin && g.getTopWin();
+              if (topWin && topWin.gBrowser &&
+                  topWin.BROWSER_NEW_TAB_URL &&
+                  uriToLoad.spec !== topWin.BROWSER_NEW_TAB_URL) {
+                let currentURI = topWin.gBrowser.selectedBrowser.currentURI;
+                let inCurrentTab = (topWin.isBlankPageURL &&
+                                    topWin.isBlankPageURL(currentURI.spec)) ||
+                                   uriToLoad.schemeIs('javascript') ||
+                                   uriToLoad.equals(currentURI);
+                args[1] = inCurrentTab ? 'current' : 'tab';
+              }
+              if (typeof args[2] === 'object') {
+                args[2].relatedToCurrent = true;
+              } else {
+                Services.console.logStringMessage('MOA.TTK: Invalid params?');
+              }
+            } catch(e) {
+              Cu.reportError(e);
+            };
+          }
         }
         return g.MOA.TTK.openLinkIn.apply(g, args);
       }
@@ -163,6 +165,10 @@ tabTweak.prototype = {
         'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', ['BEH_onCommand',
                                                                       'SU_handleTreeClick',
                                                                       'SU_handleTreeKeyPress']],
+
+      [undefined,
+        'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeIn', 'PC_doCommand', 'goDoPlacesCommand'],
+
       ['newtabNextToCurrent',
         'openUILinkIn', ['BrowserOpenTab','ns.browserOpenTab'], ['BrowserOpenNewTabOrWindow',
                                                                  'HandleAppCommandEvent',
