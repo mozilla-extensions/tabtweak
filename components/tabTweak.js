@@ -1,8 +1,6 @@
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
-XPCOMUtils.defineLazyModuleGetter(this, 'AddonManager',
-  'resource://gre/modules/AddonManager.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Preferences',
   'resource://gre/modules/Preferences.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Services',
@@ -20,22 +18,7 @@ tabTweak.prototype = {
       case 'profile-after-change':
         Services.ww.registerNotification(this);
 
-        let tilID = 'tabimprovelite@mozillaonline.com';
-        let ttkID = 'tabtweak@mozillaonline.com';
-        AddonManager.getAddonByID(tilID, (aTIL) => {
-          if (aTIL) {
-            if (aTIL.isActive) {
-              AddonManager.getAddonByID(ttkID, (aTTK) => {
-                aTTK.uninstall();
-              })
-            } else {
-              aTIL.uninstall();
-              this._init();
-            }
-          } else {
-            this._init();
-          }
-        });
+        this._init();
         break;
       case 'domwindowopened':
         aSubject.addEventListener('DOMContentLoaded', (aEvt) => {
@@ -65,9 +48,10 @@ tabTweak.prototype = {
     }
   },
 
+  _prefs: null,
   get prefs() {
-    delete this.prefs;
-    return this.prefs = new Preferences("extensions.tabtweak.");
+    this._prefs = this._prefs || new Preferences("extensions.tabtweak.");
+    return this._prefs;
   },
   _cachedPrefs: {
     'newtabNextToCurrent': false
@@ -156,23 +140,19 @@ tabTweak.prototype = {
   _expectedStacks: {
     'openLinkIn': [
       [undefined,
-        'openUILinkIn', 'doSearch', ['handleSearchCommandWhere',
-                                     'handleSearchCommand']],
+        'openUILinkIn', 'doSearch', 'handleSearchCommandWhere'],
       [undefined,
-        'openUILinkIn', 'openUILink', ['CustomizableWidgets<.onViewShowing/<.handleResult/onHistoryVisit',
+        'openUILinkIn', 'openUILink', ['_createTabElement/<',
                                        'HM__onCommand']],
       [undefined,
-        'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeWithEvent', ['BEH_onCommand',
-                                                                      'SU_handleTreeClick',
-                                                                      'SU_handleTreeKeyPress']],
-
-      [undefined,
-        'openUILinkIn', 'PUIU_openNodeIn', 'PUIU_openNodeIn', 'PC_doCommand', 'goDoPlacesCommand'],
+        'openUILinkIn', 'PUIU__openNodeIn', 'PUIU_openNodeWithEvent', ['_onCommand',
+                                                                       'BEH_onCommand',
+                                                                       'SU_handleTreeClick',
+                                                                       'SU_handleTreeKeyPress']],
 
       ['newtabNextToCurrent',
-        'openUILinkIn', ['BrowserOpenTab','ns.browserOpenTab'], ['BrowserOpenNewTabOrWindow',
-                                                                 'HandleAppCommandEvent',
-                                                                 'nsBrowserAccess.prototype._openURIInNewTab']]
+        'openUILinkIn', ['BrowserOpenTab',
+                         'this.browserOpenTab'], 'oncommand']
     ]
   },
   _matchStack: function(aType, aStack) {
