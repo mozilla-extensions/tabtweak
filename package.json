@@ -1,0 +1,16 @@
+{
+  "name": "tabtweak",
+  "version": "4.58.0",
+  "description": "Tweak tab browsing by setting default behaviors.",
+  "scripts": {
+    "lint": "eslint extension"
+  },
+  "author": "Mozilla Online Limited",
+  "license": "MPL-2.0",
+  "repository": "MozillaOnline/tabtweak",
+  "devDependencies": {
+    "eslint": "3.19.0",
+    "eslint-plugin-mozilla": "0.4.2",
+    "eslint-plugin-no-unsanitized": "2.0.1"
+  }
+}
