@@ -5,7 +5,7 @@
 
   <r:Description about="urn:mozilla:install-manifest">
     <id>tabtweak@mozillaonline.com</id>
-    <version>4.58</version>
+    <version>4.58.1</version>
     <strictCompatibility>true</strictCompatibility>
     <type>2</type>
     <multiprocessCompatible>true</multiprocessCompatible>
