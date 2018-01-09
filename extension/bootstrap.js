@@ -54,6 +54,14 @@ this.tabTweak = {
     });
   },
 
+  defaultPrefTweak() {
+    let defBranch = Services.prefs.getDefaultBranch("");
+
+    defBranch.setBoolPref("browser.search.openintab", true);
+    defBranch.setBoolPref("browser.tabs.closeWindowWithLastTab", false);
+    defBranch.setBoolPref("browser.tabs.loadBookmarksInTabs", true);
+  },
+
   handleEvent(evt) {
     let count;
     let tab;
@@ -112,11 +120,9 @@ this.tabTweak = {
   },
 
   initDefaultPrefs() {
-    let defBranch = Services.prefs.getDefaultBranch("");
+    this.defaultPrefTweak();
 
-    defBranch.setBoolPref("browser.search.openintab", true);
-    defBranch.setBoolPref("browser.tabs.closeWindowWithLastTab", false);
-    defBranch.setBoolPref("browser.tabs.loadBookmarksInTabs", true);
+    Services.obs.addObserver(this, "prefservice:after-app-defaults");
   },
 
   initWindowListener() {
@@ -125,6 +131,16 @@ this.tabTweak = {
     }
 
     CustomizableUI.addListener(this);
+  },
+
+  observe(subject, topic, data) {
+    switch (topic) {
+      case "prefservice:after-app-defaults":
+        this.defaultPrefTweak();
+        break;
+      default:
+        break;
+    }
   },
 
   onWindowClosed(win) {
@@ -237,6 +253,8 @@ this.tabTweak = {
     defBranch.setBoolPref("browser.search.openintab", false);
     defBranch.setBoolPref("browser.tabs.closeWindowWithLastTab", true);
     defBranch.setBoolPref("browser.tabs.loadBookmarksInTabs", false);
+
+    Services.obs.removeObserver(this, "prefservice:after-app-defaults");
   },
 
   uninitWindowListener() {
