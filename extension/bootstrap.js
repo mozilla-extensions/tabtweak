@@ -1,3 +1,5 @@
+/* globals APP_SHUTDOWN */
+
 const { classes: Cc, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -270,7 +272,11 @@ this.tabTweak = {
     this.initWindowListener();
   },
 
-  shutdown() {
+  shutdown(isAppShutdown) {
+    if (isAppShutdown) {
+      return;
+    }
+
     this.uninitDefaultPrefs();
     this.uninitWindowListener();
   }
@@ -280,7 +286,7 @@ function install() {}
 function startup() {
   tabTweak.startup();
 }
-function shutdown() {
-  tabTweak.shutdown();
+function shutdown(data, reason) {
+  tabTweak.shutdown(reason === APP_SHUTDOWN);
 }
 function uninstall() {}
