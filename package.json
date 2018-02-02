@@ -1,6 +1,6 @@
 {
   "name": "tabtweak",
-  "version": "4.58.2",
+  "version": "4.59.0",
   "description": "Tweak tab browsing by setting default behaviors.",
   "scripts": {
     "lint": "eslint extension"
