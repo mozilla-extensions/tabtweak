@@ -1,21 +1,12 @@
 /* globals APP_SHUTDOWN */
 
-const { classes: Cc, utils: Cu } = Components;
+const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
   "resource://gre/modules/Services.jsm");
-
-XPCOMUtils.defineLazyGetter(this, "CETracking", () => {
-  try {
-    return Cc["@mozilla.com.cn/tracking;1"].getService().wrappedJSObject;
-  } catch (ex) {
-    console.error(ex);
-    return null;
-  }
-});
 
 this.tabTweak = {
   _debug: false,
@@ -31,8 +22,6 @@ this.tabTweak = {
                                                                       "SU_handleTreeKeyPress"]]
     ]
   },
-
-  _mousedownSinceSelect: new WeakMap(),
 
   _matchStack(aType, aStack) {
     return this._expectedStacks[aType].some(aExpected => {
@@ -65,48 +54,18 @@ this.tabTweak = {
   },
 
   handleEvent(evt) {
-    let count;
-    let tab;
     let win = evt.target.ownerGlobal;
 
     switch (evt.type) {
       case "dblclick":
         if (evt.button !== 0 || evt.target.localName !== "tab") {
-          break;
+          return;
         }
 
-        tab = evt.target;
+        let tab = evt.target;
         if (tab) {
-          let status = "unknown";
-          // get mousedown count before it is reset by "select" from removeTab
-          count = this._mousedownSinceSelect.get(win);
-
           tab.ownerGlobal.gBrowser.removeTab(tab);
-
-          if (isNaN(count)) {
-            status = "nan";
-          } else {
-            status = count > 1 ? `selected` : "other";
-          }
-
-          if (CETracking && CETracking.track) {
-            CETracking.track(`ttk-dblclick-${status}`);
-          }
         }
-        break;
-      case "mousedown":
-        if (evt.button !== 0 || evt.target.localName !== "tab") {
-          break;
-        }
-
-        tab = evt.target;
-        if (tab && tab.selected) {
-          count = this._mousedownSinceSelect.get(win) || 0;
-          this._mousedownSinceSelect.set(win, count + 1);
-        }
-        break;
-      case "select":
-        this._mousedownSinceSelect.set(win, 0);
         break;
       case "MozAfterPaint":
         win.removeEventListener(evt.type, this);
@@ -152,8 +111,6 @@ this.tabTweak = {
 
     if (win.gBrowser && win.gBrowser.tabContainer) {
       win.gBrowser.tabContainer.removeEventListener("dblclick", this);
-      win.gBrowser.tabContainer.removeEventListener("mousedown", this, true);
-      win.gBrowser.tabContainer.removeEventListener("select", this);
     }
 
     if (win.SidebarUI) {
@@ -191,8 +148,6 @@ this.tabTweak = {
 
     if (win.gBrowser && win.gBrowser.tabContainer) {
       win.gBrowser.tabContainer.addEventListener("dblclick", this);
-      win.gBrowser.tabContainer.addEventListener("mousedown", this, true);
-      win.gBrowser.tabContainer.addEventListener("select", this);
     }
 
     if (win.SidebarUI) {
