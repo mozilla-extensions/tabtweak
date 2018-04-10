@@ -148,6 +148,8 @@ this.tabTweak = {
 
     if (win.gBrowser && win.gBrowser.tabContainer) {
       win.gBrowser.tabContainer.addEventListener("dblclick", this);
+    } else if (win._gBrowser && win._gBrowser.tabContainer) {
+      win._gBrowser.tabContainer.addEventListener("dblclick", this);
     }
 
     if (win.SidebarUI) {
