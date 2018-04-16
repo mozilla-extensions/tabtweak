@@ -1,0 +1,20 @@
+{
+  "extensionDescription": {
+    "message": "Tweak tab browsing by setting default behaviors."
+  },
+  "extensionName": {
+    "message": "Tab Tweak"
+  },
+  "option.closeTabsByDoubleClick": {
+    "message": "Close current tab by double click"
+  },
+  "option.newTabPosition": {
+    "message": "Open new tab next to the current one"
+  },
+  "option.openBookmarksInNewTabs": {
+    "message": "Open bookmark in a new tab"
+  },
+  "option.openSearchResultsInNewTabs": {
+    "message": "Open search result in a new tab"
+  }
+}

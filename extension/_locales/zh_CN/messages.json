@@ -1,0 +1,20 @@
+{
+  "extensionDescription": {
+    "message": "设置打开链接和关闭标签的默认行为，方便使用。"
+  },
+  "extensionName": {
+    "message": "标签页优化"
+  },
+  "option.closeTabsByDoubleClick": {
+    "message": "启用双击关闭当前标签页"
+  },
+  "option.newTabPosition": {
+    "message": "紧临当前标签页打开新标签页"
+  },
+  "option.openBookmarksInNewTabs": {
+    "message": "在新标签页中打开书签"
+  },
+  "option.openSearchResultsInNewTabs": {
+    "message": "在新标签页中打开搜索结果"
+  }
+}
