@@ -19,8 +19,7 @@
       </r:Description>
     </targetApplication>
 
-    <updateURL>http://g-fox.cn/chinaedition/addons/tabtweak/update.rdf?version=%ITEM_VERSION%</updateURL>
-    <updateKey>MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDAvclCQ8nXMVB+UZpw2bLa7Qep6UO1YV6quUpw0RBDQgh5BMX6d4VaW/ZwMts7dFRA/7+yfjr3DTG036ldlRdnho6EztgDZKpLuU5tEORc9JfVspqb1Yw7ePRrKuc0vPyq1+2f1eEuXmikK3DGImd2lL9AoNYwHj7/+ERhntRQsQIDAQAB</updateKey>
+    <updateURL><![CDATA[https://addons.firefox.com.cn/chinaedition/addons/updates.json?reqVersion=%REQ_VERSION%&id=%ITEM_ID%&version=%ITEM_VERSION%&maxAppVersion=%ITEM_MAXAPPVERSION%&status=%ITEM_STATUS%&appID=%APP_ID%&appVersion=%APP_VERSION%&appOS=%APP_OS%&appABI=%APP_ABI%&locale=%APP_LOCALE%&currentAppVersion=%CURRENT_APP_VERSION%&updateType=%UPDATE_TYPE%&compatMode=%COMPATIBILITY_MODE%]]></updateURL>
 
     <name>Tab Tweak</name>
     <description>Tweak tab browsing by setting default behaviors.</description>
