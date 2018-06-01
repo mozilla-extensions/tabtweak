@@ -13,9 +13,14 @@ this.tabTweak = {
 
   _expectedStacks: {
     "openLinkIn": [
+      ["openUILinkIn", "openTrustedLinkIn", "doSearch", "handleSearchCommandWhere"],
       ["openUILinkIn", "doSearch", "handleSearchCommandWhere"],
       ["openUILinkIn", "openUILink", ["_createTabElement/<",
                                       "HM__onCommand"]],
+      ["openUILinkIn", "openTrustedLinkIn", "PUIU__openNodeIn", "PUIU_openNodeWithEvent", ["_onCommand",
+                                                                                           "BEH_onCommand",
+                                                                                           "onSidebarTreeClick",
+                                                                                           "onSidebarTreeKeyPress"]],
       ["openUILinkIn", "PUIU__openNodeIn", "PUIU_openNodeWithEvent", ["_onCommand",
                                                                       "BEH_onCommand",
                                                                       "SU_handleTreeClick",
@@ -68,9 +73,13 @@ this.tabTweak = {
         }
         break;
       case "MozAfterPaint":
-        win.removeEventListener(evt.type, this);
+        if (win.SidebarUI._switcherTarget) {
+          win.removeEventListener(evt.type, this);
 
-        win.SidebarUI._switcherTarget.addEventListener("SidebarShown", this);
+          win.SidebarUI._switcherTarget.addEventListener("SidebarShown", this);
+        } else {
+          win.console.warn("SidebarUI._switcherTarget is not yet available");
+        }
         break;
       case "SidebarShown":
         this.onWindowOpened(win.SidebarUI.browser.contentWindow);
