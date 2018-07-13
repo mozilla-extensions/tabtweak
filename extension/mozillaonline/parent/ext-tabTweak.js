@@ -58,21 +58,7 @@ this.tabTweak = class extends ExtensionAPI {
     this._uninitDefaultPrefs();
   }
 
-  startup() {
+  onStartup() {
     this._initDefaultPrefs();
-  }
-
-  getAPI() {
-    let tabTweak = this;
-
-    return {
-      mozillaonline: {
-        tabTweak: {
-          async startup() {
-            return tabTweak.startup();
-          },
-        },
-      },
-    };
   }
 };

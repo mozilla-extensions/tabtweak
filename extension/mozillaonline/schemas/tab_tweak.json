@@ -1,15 +1,1 @@
-[
-  {
-    "namespace": "mozillaonline.tabTweak",
-    "description": "Tab Tweak",
-    "functions": [
-      {
-        "name": "startup",
-        "type": "function",
-        "description": "Flip a few tab related preferences on default branch",
-        "parameters": [],
-        "async": true
-      }
-    ]
-  }
-]
+[]
