@@ -4,8 +4,9 @@
 
 "use strict";
 
-/* global ExtensionAPI, Services */
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+/* global ExtensionAPI */
+ChromeUtils.defineModuleGetter(this, "Services",
+  "resource://gre/modules/Services.jsm");
 
 const tabTweakPrefs = {
   "browser.search.openintab": true,
