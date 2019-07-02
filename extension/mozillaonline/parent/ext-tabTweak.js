@@ -31,16 +31,6 @@ this.tabTweak = class extends ExtensionAPI {
     Services.obs.addObserver(this, "prefservice:after-app-defaults");
   }
 
-  _uninitDefaultPrefs() {
-    let defaultBranch = Services.prefs.getDefaultBranch("");
-
-    for (let [key, value] of Object.entries(tabTweakPrefs)) {
-      defaultBranch.setBoolPref(key, !value);
-    }
-
-    Services.obs.removeObserver(this, "prefservice:after-app-defaults");
-  }
-
   observe(subject, topic) {
     switch (topic) {
       case "prefservice:after-app-defaults":
@@ -58,7 +48,7 @@ this.tabTweak = class extends ExtensionAPI {
       return;
     }
 
-    this._uninitDefaultPrefs();
+    Services.obs.removeObserver(this, "prefservice:after-app-defaults");
   }
 
   onStartup() {
