@@ -1,6 +1,6 @@
 {
   "name": "tabtweak",
-  "version": "5.68.0",
+  "version": "5.107.0",
   "description": "Tweak tab browsing by setting default behaviors.",
   "scripts": {
     "build": "web-ext build --filename tabtweak.xpi",
