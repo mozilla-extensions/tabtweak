@@ -30,7 +30,8 @@
     "page": "options.html"
   },
   "permissions": [
-    "browserSettings"
+    "browserSettings",
+    "mozillaAddons"
   ],
   "version": "5.68"
 }
