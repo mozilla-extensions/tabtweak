@@ -4,6 +4,7 @@
   "description": "Tweak tab browsing by setting default behaviors.",
   "scripts": {
     "build": "web-ext build --filename tabtweak.xpi",
+    "start": "web-ext run --verbose --pref devtools.console.stdout.chrome=true --pref devtools.console.stdout.content=true --pref extensions.experiments.enabled=true --pref xpinstall.signatures.required=false",
     "lint": "eslint extension"
   },
   "author": "Mozilla Online Limited",
