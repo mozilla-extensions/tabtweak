@@ -3,7 +3,7 @@
     "gecko": {
       "id": "tabtweak@mozillaonline.com",
       "strict_min_version": "61.0a1",
-      "update_url": "https://archive.mozilla.org/pub/zn_pack/addons.json"
+      "update_url": "https://archive.mozilla.org/pub/cn_pack/addons.json"
     }
   },
   "default_locale": "en_US",
