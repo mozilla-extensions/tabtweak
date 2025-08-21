@@ -2,13 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-"use strict";
+/* global ExtensionAPI, Services */
 
-/* global ExtensionAPI, globalThis */
-// Since Fx 104, see https://bugzil.la/1667455,1780695
-const Services =
-  globalThis.Services ||
-  ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
+"use strict";
 
 const tabTweakPrefs = {
   "browser.search.openintab": true,
