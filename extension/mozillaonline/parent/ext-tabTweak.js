@@ -14,10 +14,6 @@ const tabTweakPrefs = {
   "browser.tabs.loadBookmarksInTabs": true
 };
 
-if (Services.prefs.getCharPref("distribution.id", "").trim().toLowerCase() !== "mozillaonline") {
-  throw new Error("This extension is not supported for this distribution!");
-}
-
 this.tabTweak = class extends ExtensionAPI {
   _defaultPrefTweak() {
     let defaultBranch = Services.prefs.getDefaultBranch("");
